@@ -1,0 +1,225 @@
+‘’<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>云南制造·出海模拟器</title>
+<style>
+body{margin:0;background:#0a1a14;color:#e8f7f0;font-family:system-ui,sans-serif;padding-bottom:60px;}
+header{text-align:center;padding:14px 16px;}
+header h1{font-size:28px;margin:6px 0;}
+header p{color:#cbd5c2;font-size:12px;margin:0;}
+.container{padding:12px 14px;max-width:900px;margin:0 auto;}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;}
+@media(min-width:720px){.grid{grid-template-columns:repeat(4,1fr);}}
+.card{background:linear-gradient(#1e2a25,#111a14);border:1px solid #25443e;border-radius:14px;padding:14px;text-align:center;cursor:pointer;transition:0.3s;}
+.card:hover{border-color:#2a9d8f;transform:scale(1.02);}
+.card .emoji{font-size:36px;}
+.card .label{font-size:16px;font-weight:bold;margin:6px 0 4px;}
+.card .sub{font-size:12px;color:#9aa29a;}
+.section{display:none;text-align:center;padding:20px;}
+.section.active{display:block;}
+.btn{background:#2a9d8f;color:#fff;border:none;padding:15px 40px;font-size:18px;border-radius:8px;margin-top:20px;cursor:pointer;}
+.btn:disabled{opacity:0.5;cursor:not-allowed;}
+.progress-wrap{width:100%;background:#2a3a35;border-radius:8px;height:24px;margin:15px 0;overflow:hidden;}
+.progress-bar{width:0%;height:100%;background:#2a9d8f;color:#fff;text-align:center;line-height:24px;font-size:14px;transition:width 0.3s;}
+.strategy-btn{background:#d4a847;color:#1a2e2a;border:none;padding:15px 30px;margin:10px;border-radius:8px;cursor:pointer;font-size:16px;}
+.footer{text-align:center;font-size:12px;color:#5a6a62;padding:20px 0 10px;}
+.character-card{display:none;margin-top:30px;padding:20px;background:#1a2e2a;border-radius:16px;border:1px solid #d4a847;text-align:center;}
+.character-card .title{font-size:24px;color:#d4a847;font-weight:bold;}
+.character-card .role{font-size:18px;margin:8px 0;color:#e8f7f0;}
+.character-card .bgm{font-size:16px;color:#9aa29a;margin:8px 0;}
+.character-card .slogan{font-size:14px;color:#cbd5c2;margin:8px 0;font-style:italic;}
+.character-card img{width:140px;height:140px;border-radius:50%;object-fit:cover;border:3px solid #d4a847;box-shadow:0 0 20px rgba(212,168,71,0.3);transition:transform 0.3s ease;display:block;margin:0 auto;}
+.character-card img:hover{transform:scale(1.05);}
+</style>
+</head>
+<body>
+
+<header>
+<h1>云南制造·出海模拟器</h1>
+<p>模拟经营 + 人格测试，探索全球市场的不同路径</p >
+</header>
+
+<div class="container">
+
+<!-- 选品界面 -->
+<div id="stepSelect" class="section active">
+<h2>选择你的出海产品</h2>
+<div class="grid" id="productGrid">
+<div class="card" data-product="PuEr"><div class="emoji">🍵</div><div class="label">普洱茶</div><div class="sub">高原陈香</div></div>
+<div class="card" data-product="XianHua"><div class="emoji">🥮</div><div class="label">鲜花饼</div><div class="sub">四季如春</div></div>
+<div class="card" data-product="WildMush"><div class="emoji">🍄</div><div class="label">野生菌</div><div class="sub">深山珍品</div></div>
+<div class="card" data-product="Coffee"><div class="emoji">☕</div><div class="label">小粒咖啡</div><div class="sub">日照充足</div></div>
+</div>
+</div>
+
+<!-- 加工界面 -->
+<div id="stepProcess" class="section">
+<h2>匹配德国设备，点击加工</h2>
+<div id="equipmentDisplay" style="font-size:24px;color:#d4a847;margin:10px 0;">请先选择产品</div>
+<div class="progress-wrap"><div id="progressBar" class="progress-bar">0%</div></div>
+<button id="startBtn" class="btn">开始加工</button>
+</div>
+
+<!-- 策略选择界面 -->
+<div id="stepStrategy" class="section">
+<h2>选择出海策略</h2>
+<button class="strategy-btn" data-strategy="A">欧盟高端路线</button>
+<button class="strategy-btn" data-strategy="B">东盟新兴市场路线</button>
+<button class="strategy-btn" data-strategy="C">好莱坞联名路线</button>
+<div id="resultArea" style="margin-top:20px;font-size:18px;"></div>
+<!-- 角色卡 -->
+<div id="characterCard" class="character-card">
+<div id="cardImage" style="margin-bottom:10px;"></div>
+<div id="cardTitle" class="title"></div>
+<div id="cardRole" class="role"></div>
+<div id="cardBGM" class="bgm"></div>
+<div id="cardSlogan" class="slogan"></div>
+<div id="cardMusicPlayer" style="margin-top:12px;"></div>
+<button onclick="resetGame()" style="margin-top:20px;background:#d4a847;color:#1a2e2a;border:none;padding:10px 30px;border-radius:8px;cursor:pointer;">重新测试</button>
+</div>
+</div>
+
+</div>
+
+<div class="footer">用德国技术，讲云南故事</div>
+<script>
+(function() {
+    var currentProduct = null;
+    var stepSelect = document.getElementById('stepSelect');
+    var stepProcess = document.getElementById('stepProcess');
+    var stepStrategy = document.getElementById('stepStrategy');
+    var equipmentDisplay = document.getElementById('equipmentDisplay');
+    var progressBar = document.getElementById('progressBar');
+    var startBtn = document.getElementById('startBtn');
+    var resultArea = document.getElementById('resultArea');
+    var characterCard = document.getElementById('characterCard');
+
+    var equipmentMap = {
+        'PuEr': '西门子AI色选机（分拣精度99.9%）',
+        'XianHua': '智能隧道炉（温度±0.5℃）',
+        'WildMush': '真空冻干机（锁鲜率95%）',
+        'Coffee': '全自动烘焙机（曲线烘焙）'
+    };
+
+    document.querySelectorAll('.card').forEach(function(card) {
+        card.addEventListener('click', function() {
+            var key = this.getAttribute('data-product');
+            currentProduct = key;
+            equipmentDisplay.textContent = equipmentMap[key] || '未知设备';
+            stepSelect.classList.remove('active');
+            stepProcess.classList.add('active');
+            progressBar.style.width = '0%';
+            progressBar.textContent = '0%';
+            startBtn.disabled = false;
+            startBtn.textContent = '开始加工';
+            characterCard.style.display = 'none';
+            resultArea.textContent = '';
+        });
+    });
+
+    startBtn.addEventListener('click', function() {
+        if (!currentProduct) {
+            alert('请先选择产品');
+            return;
+        }
+        startBtn.disabled = true;
+        startBtn.textContent = '加工中...';
+        var progress = 0;
+        var interval = setInterval(function() {
+            progress += Math.floor(Math.random() * 15) + 5;
+            if (progress >= 100) {
+                progress = 100;
+                clearInterval(interval);
+                progressBar.style.width = '100%';
+                progressBar.textContent = '100%';
+                startBtn.textContent = '加工完成';
+                setTimeout(function() {
+                    stepProcess.classList.remove('active');
+                    stepStrategy.classList.add('active');
+                    resultArea.textContent = '请选择你的出海策略';
+                }, 500);
+            } else {
+                progressBar.style.width = progress + '%';
+                progressBar.textContent = progress + '%';
+            }
+        }, 300);
+    });
+
+    document.querySelectorAll('.strategy-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var s = this.getAttribute('data-strategy');
+            if (!currentProduct) {
+                var activeCard = document.querySelector('.card.active');
+                if (activeCard) {
+                    currentProduct = activeCard.getAttribute('data-product');
+                } else {
+                    alert('请先选择产品');
+                    return;
+                }
+            }
+            var map = {
+                'PuEr_A': { name: '欧盟高端路线', title: '贝克街-战略分析师', role: 'Sherlock Holmes', bgm: 'Lorde - Royals', slogan: '演绎法不谈感情，只谈品质。', image: 'https://i.ibb.co/BhZfcBB/1aff25ed20912b61f3d5973796c5a28a.jpg', bgmUrl: 'https://www.joy127.com/url/156195.mp3' },
+                'PuEr_B': { name: '东盟新兴市场路线', title: '伊利诺伊州-传奇工程师', role: 'Michael Scofield', bgm: 'Lorde - Tennis Court', slogan: '每一步都被精准计算，市场就是我的越狱路线图。', image: 'https://i.ibb.co/fdcTqGzZ/c7128e94a4cc313c2e2ccd3919d6ea23.jpg', bgmUrl: 'https://www.joy127.com/url/156196.mp3' },
+                'PuEr_C': { name: '好莱坞联名路线', title: '英国-冷峻杀手', role: 'the Jackal', bgm: 'Lana Del Rey - West Coast', slogan: '完美的方案，从不失手。', image: 'https://i.ibb.co/rR69bZqr/6a694053601e4372ac37584e8f2b6aac.jpg', bgmUrl: 'https://www.joy127.com/url/156200.mp3' },
+                'XianHua_A': { name: '欧盟高端路线', title: '巴黎-细节女王', role: 'Beth Ann Stanton', bgm: 'Lana Del Rey - Video Games', slogan: '温柔是最锋利的刀，细节是最贵的筹码。', image: 'https://i.ibb.co/TMPFc1Bx/bf09a57265c96f502617c6b856432ec7.jpg', bgmUrl: 'https://www.joy127.com/url/156199.mp3' },
+                'XianHua_B': { name: '东盟新兴市场路线', title: '紫藤巷-美学操盘手', role: 'Gabrielle Solis', bgm: 'Jessie J - California', slogan: '完美的外表，即是最好的卖点。', image: 'https://i.ibb.co/h19qCpyh/bb5e41c188ef1a693934390faa69968e.jpg', bgmUrl: 'https://www.joy127.com/url/156203.mp3' },
+                'XianHua_C': { name: '好莱坞联名路线', title: '好莱坞-浪漫派商人', role: 'Bree Van de Kamp', bgm: 'Lana Del Rey - Young and Beautiful', slogan: '让世界为云南之美买单。', image: 'https://i.ibb.co/6RQzyc0B/7c93c5cc2c7c61c7bc75e6741c8f0dd4.jpg', bgmUrl: 'https://www.joy127.com/url/156198.mp3' },
+                'WildMush_A': { name: '欧盟高端路线', title: '异世界-神秘主理人', role: 'Wendesday Addams', bgm: 'White Feather Hawk Tail Deer Hunter- Lana Del Rey', slogan: '我的黑暗，只给懂的人。', image: 'https://i.ibb.co/JRwYcqrk/e46843f9cf36156be2f597a0c51e1b65.jpg', bgmUrl: 'https://www.joy127.com/url/156206.mp3' },
+                'WildMush_B': { name: '东盟新兴市场路线', title: '霍金斯-冒险家', role: 'Eleven', bgm: 'Raye - Click Clack Symphony', slogan: '越是危险的地方，也越有机会。', image: 'https://i.ibb.co/jvZYJJB3/0c766fca6184b6131761fe55a3a62e1d.jpg', bgmUrl: 'https://www.joy127.com/url/156201.mp3' },
+                'WildMush_C': { name: '好莱坞联名路线', title: '霍金斯-街头疾风', role: 'Max Mayfield', bgm: 'Lorde - Green Light', slogan: '向前走，别回头。', image: 'https://i.ibb.co/JRP3zJRx/091d01bc0eba7515dd63d65e582b4bfe.jpg', bgmUrl: 'https://www.joy127.com/url/156197.mp3' },
+                'Coffee_A': { name: '欧盟高端路线', title: '塞维利亚-节奏大师', role: 'ROSALÍA', bgm: 'ROSALÍA - Reliquia', slogan: '弗拉明戈的节奏，亦是市场的节奏。', image: 'https://i.ibb.co/mPkjqh8/62fcbf1757045df982c41f3f164c2e26.jpg', bgmUrl: 'https://www.joy127.com/url/156202.mp3' },
+                'Coffee_B': { name: '东盟新兴市场路线', title: '伦敦街头-野心家', role: 'Raye', bgm: 'Raye - Suzanne', slogan: '好听不一定卖座，但卖座一定好听。', image: 'https://i.ibb.co/S7NrQQms/6ce321415aa3c95bd5a28d96a6b46d10.jpg', bgmUrl: 'https://www.joy127.com/url/156207.mp3' }
+                ,
+                'Coffee_C': { name: '好莱坞联名路线', title: '异世界-霓虹狼裔', role: 'Enid Sinclair', bgm: 'Olivia Rodrigo - good 4 u', slogan: '色彩就是我的通行证。', image: 'https://i.ibb.co/hxDtDxML/18fa1dc058369455c545feb968db1cef.jpg', bgmUrl: 'https://www.joy127.com/url/156205.mp3' }
+            };
+            var key = currentProduct + '_' + s;
+            var data = map[key];
+            if (!data) {
+                resultArea.textContent = '该组合暂未配置角色';
+                characterCard.style.display = 'none';
+                return;
+            }
+            resultArea.textContent = '你选择了：' + data.name;
+            characterCard.style.display = 'block';
+
+            // 图片显示（createElement 方式确保可靠）
+            var imgBox = document.getElementById('cardImage');
+            imgBox.innerHTML = '';
+            if (data.image && data.image.length > 0) {
+                var img = document.createElement('img');
+                img.src = data.image;
+                img.style.cssText = 'display:block; margin:0 auto; width:140px; height:140px; border-radius:50%; object-fit:cover; border:3px solid #d4a847; box-shadow:0 0 20px rgba(212,168,71,0.3); transition:transform 0.3s ease;';
+                img.alt = '角色形象';
+                img.onmouseover = function() { this.style.transform = 'scale(1.05)'; };
+                img.onmouseout = function() { this.style.transform = 'scale(1)'; };
+                imgBox.appendChild(img);
+            } else {
+                imgBox.textContent = '🎭';
+                imgBox.style.fontSize = '60px';
+                imgBox.style.textAlign = 'center';
+            }
+
+            document.getElementById('cardTitle').textContent = data.title;
+            document.getElementById('cardRole').textContent = '灵魂角色：' + data.role;
+            document.getElementById('cardBGM').textContent = 'BGM：' + data.bgm;
+            document.getElementById('cardSlogan').textContent = '「' + data.slogan + '」';
+
+            var player = document.getElementById('cardMusicPlayer');
+            if (data.bgmUrl && data.bgmUrl.length > 0) {
+                player.innerHTML = '<audio controls style="width:100%;max-width:300px;margin:0 auto;"><source src="' + data.bgmUrl + '" type="audio/mpeg">您的浏览器不支持音频播放</audio>';
+            } else {
+                player.innerHTML = '<p style="color:#5a6a62;font-size:14px;">🎵 ' + data.bgm + '</p >';
+            }
+        });
+    });
+
+})();
+
+function resetGame() {
+    location.reload();
+}
+</script>
+</body>
+</html>
